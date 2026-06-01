@@ -48,7 +48,7 @@
       <div v-if="showList == '' && onSearch">
         <el-empty description="搜索结果为空"></el-empty>
       </div>
-      <div class="questionCover" v-for="(item, i) in showList" :key="i">
+      <div class="questionCover" v-for="(item, i) in showList" :key="item.id">
         <!-- 判断题 -->
         <div class="typeCover" v-if="showList[i].option.length == 2">
           <div class="questionTypeCover">
@@ -84,28 +84,28 @@
               </div>
               <div class="questionStem">{{ showList[i].questionStem }}</div>
               <!-- 练习模式：判断题选择 -->
-              <div class="practice-area" v-if="practiceMode && !practiceResults[i]">
-                <el-radio-group v-model="practiceAnswers[i]" @change="val => submitPractice(i, val)">
+              <div class="practice-area" v-if="practiceMode && !practiceResults[item.id]">
+                <el-radio-group v-model="practiceAnswers[item.id]" @change="val => submitPractice(item, val)">
                   <el-radio v-for="(opt, k) in showList[i].option" :key="k" :label="opt">{{ opt }}</el-radio>
                 </el-radio-group>
               </div>
               <!-- 练习结果 -->
-              <div class="practice-result" v-if="practiceMode && practiceResults[i]">
-                <span class="result-tag" :class="practiceResults[i].isCorrect ? 'result-true' : 'result-false'">
-                  {{ practiceResults[i].isCorrect ? '回答正确' : '回答错误' }}
+              <div class="practice-result" v-if="practiceMode && practiceResults[item.id]">
+                <span class="result-tag" :class="practiceResults[item.id].isCorrect ? 'result-true' : 'result-false'">
+                  {{ practiceResults[item.id].isCorrect ? '回答正确' : '回答错误' }}
                 </span>
-                <span class="your-answer">你的答案：{{ practiceResults[i].userAnswer }}</span>
-                <span class="correctAnswer" v-if="!practiceResults[i].isCorrect">正确答案：{{ showList[i].answer }}</span>
+                <span class="your-answer">你的答案：{{ practiceResults[item.id].userAnswer }}</span>
+                <span class="correctAnswer" v-if="!practiceResults[item.id].isCorrect">正确答案：{{ showList[i].answer }}</span>
               </div>
               <!-- 普通模式答案 -->
               <div class="questionAnswer" v-if="!practiceMode">
                 <span class="colorBefore"></span>
                 <span class="correctAnswer">正确答案：</span>
-                <span class="true" @click="toggleAnswer(i)" v-if="showList[i].answer == '正确'">{{ showAnswers[i] ?
+                <span class="true" @click="toggleAnswer(showList[i])" v-if="showList[i].answer == '正确'">{{ isAnswerShown(showList[i]) ?
                   showList[i].answer : '' }}</span>
-                <span class="false" @click="toggleAnswer(i)" v-if="showList[i].answer == '错误'">{{ showAnswers[i] ?
+                <span class="false" @click="toggleAnswer(showList[i])" v-if="showList[i].answer == '错误'">{{ isAnswerShown(showList[i]) ?
                   showList[i].answer : '' }}</span>
-                <span class="answer" @click="toggleAnswer(i)" v-if="!showAnswers[i]">点击显示答案</span>
+                <span class="answer" @click="toggleAnswer(showList[i])" v-if="!isAnswerShown(showList[i])">点击显示答案</span>
               </div>
             </div>
           </div>
@@ -145,27 +145,27 @@
               </div>
               <div class="questionStem">{{ showList[i].questionStem }}</div>
               <!-- 练习模式：填空题输入 -->
-              <div class="practice-area" v-if="practiceMode && !practiceResults[i]">
+              <div class="practice-area" v-if="practiceMode && !practiceResults[item.id]">
                 <div class="fill-practice-row">
-                  <el-input v-model="practiceAnswers[i]" placeholder="请输入答案" class="fill-input"
-                    @keyup.enter.native="submitPractice(i, practiceAnswers[i])"></el-input>
-                  <el-button type="primary" size="small" @click="submitPractice(i, practiceAnswers[i])"
+                  <el-input v-model="practiceAnswers[item.id]" placeholder="请输入答案" class="fill-input"
+                    @keyup.enter="submitPractice(item, practiceAnswers[item.id])"></el-input>
+                  <el-button type="primary" size="small" @click="submitPractice(item, practiceAnswers[item.id])"
                     class="fill-submit">提交</el-button>
                 </div>
               </div>
               <!-- 练习结果 -->
-              <div class="practice-result" v-if="practiceMode && practiceResults[i]">
-                <span class="result-tag" :class="practiceResults[i].isCorrect ? 'result-true' : 'result-false'">
-                  {{ practiceResults[i].isCorrect ? '回答正确' : '回答错误' }}
+              <div class="practice-result" v-if="practiceMode && practiceResults[item.id]">
+                <span class="result-tag" :class="practiceResults[item.id].isCorrect ? 'result-true' : 'result-false'">
+                  {{ practiceResults[item.id].isCorrect ? '回答正确' : '回答错误' }}
                 </span>
-                <span class="your-answer">你的答案：{{ practiceResults[i].userAnswer }}</span>
-                <span class="correctAnswer" v-if="!practiceResults[i].isCorrect">正确答案：{{ showList[i].answer }}</span>
+                <span class="your-answer">你的答案：{{ practiceResults[item.id].userAnswer }}</span>
+                <span class="correctAnswer" v-if="!practiceResults[item.id].isCorrect">正确答案：{{ showList[i].answer }}</span>
               </div>
               <!-- 普通模式答案 -->
               <div class="questionAnswer" v-if="!practiceMode">
                 <span class="colorBefore"></span>
                 <span class="correctAnswer">正确答案：</span>
-                <span class="answer" @click="toggleAnswer(i)">{{ showAnswers[i] ? showList[i].answer : '点击显示答案'
+                <span class="answer" @click="toggleAnswer(showList[i])">{{ isAnswerShown(showList[i]) ? showList[i].answer : '点击显示答案'
                   }}</span>
               </div>
             </div>
@@ -207,8 +207,8 @@
               <div class="questionStem">{{ showList[i].questionStem }}</div>
               <!-- 练习模式：单选题选择 -->
               <div class="practice-area" v-if="practiceMode">
-                <el-radio-group v-model="practiceAnswers[i]" @change="val => submitPractice(i, val)"
-                  :disabled="!!practiceResults[i]">
+                <el-radio-group v-model="practiceAnswers[item.id]" @change="val => submitPractice(item, val)"
+                  :disabled="!!practiceResults[item.id]">
                   <div v-for="(opt, k) in showList[i].option" :key="k" class="practice-option">
                     <el-radio :label="options[k]">{{ options[k] }}、{{ opt }}</el-radio>
                   </div>
@@ -222,18 +222,18 @@
                 </div>
               </div>
               <!-- 练习结果 -->
-              <div class="practice-result" v-if="practiceMode && practiceResults[i]">
-                <span class="result-tag" :class="practiceResults[i].isCorrect ? 'result-true' : 'result-false'">
-                  {{ practiceResults[i].isCorrect ? '回答正确' : '回答错误' }}
+              <div class="practice-result" v-if="practiceMode && practiceResults[item.id]">
+                <span class="result-tag" :class="practiceResults[item.id].isCorrect ? 'result-true' : 'result-false'">
+                  {{ practiceResults[item.id].isCorrect ? '回答正确' : '回答错误' }}
                 </span>
-                <span class="your-answer">你的答案：{{ practiceResults[i].userAnswer }}</span>
-                <span class="correctAnswer" v-if="!practiceResults[i].isCorrect">正确答案：{{ showList[i].answer }}</span>
+                <span class="your-answer">你的答案：{{ practiceResults[item.id].userAnswer }}</span>
+                <span class="correctAnswer" v-if="!practiceResults[item.id].isCorrect">正确答案：{{ showList[i].answer }}</span>
               </div>
               <!-- 普通模式答案 -->
               <div class="questionAnswer" v-if="!practiceMode">
                 <span class="colorBefore"></span>
                 <span class="correctAnswer">正确答案：</span>
-                <span class="answer" @click="toggleAnswer(i)">{{ showAnswers[i] ? showList[i].answer : '点击显示答案'
+                <span class="answer" @click="toggleAnswer(showList[i])">{{ isAnswerShown(showList[i]) ? showList[i].answer : '点击显示答案'
                   }}</span>
               </div>
             </div>
@@ -275,13 +275,13 @@
               <div class="questionStem">{{ showList[i].questionStem }}</div>
               <!-- 练习模式：多选题选择 -->
               <div class="practice-area" v-if="practiceMode">
-                <el-checkbox-group v-model="practiceAnswers[i]" :disabled="!!practiceResults[i]">
+                <el-checkbox-group v-model="practiceAnswers[item.id]" :disabled="!!practiceResults[item.id]">
                   <div v-for="(opt, k) in showList[i].option" :key="k" class="practice-option">
                     <el-checkbox :label="options[k]">{{ options[k] }}、{{ opt }}</el-checkbox>
                   </div>
                 </el-checkbox-group>
-                <el-button v-if="!practiceResults[i]" type="primary" size="small" @click="submitPractice(i, practiceAnswers[i])"
-                  :disabled="!practiceAnswers[i] || practiceAnswers[i].length === 0" class="multi-submit">确认提交</el-button>
+                <el-button v-if="!practiceResults[item.id]" type="primary" size="small" @click="submitPractice(item, practiceAnswers[item.id])"
+                  :disabled="!practiceAnswers[item.id] || practiceAnswers[item.id].length === 0" class="multi-submit">确认提交</el-button>
               </div>
               <!-- 普通模式选项 -->
               <div class="questionOpt" v-if="!practiceMode">
@@ -291,18 +291,18 @@
                 </div>
               </div>
               <!-- 练习结果 -->
-              <div class="practice-result" v-if="practiceMode && practiceResults[i]">
-                <span class="result-tag" :class="practiceResults[i].isCorrect ? 'result-true' : 'result-false'">
-                  {{ practiceResults[i].isCorrect ? '回答正确' : '回答错误' }}
+              <div class="practice-result" v-if="practiceMode && practiceResults[item.id]">
+                <span class="result-tag" :class="practiceResults[item.id].isCorrect ? 'result-true' : 'result-false'">
+                  {{ practiceResults[item.id].isCorrect ? '回答正确' : '回答错误' }}
                 </span>
-                <span class="your-answer">你的答案：{{ practiceResults[i].userAnswer }}</span>
-                <span class="correctAnswer" v-if="!practiceResults[i].isCorrect">正确答案：{{ showList[i].answer }}</span>
+                <span class="your-answer">你的答案：{{ practiceResults[item.id].userAnswer }}</span>
+                <span class="correctAnswer" v-if="!practiceResults[item.id].isCorrect">正确答案：{{ showList[i].answer }}</span>
               </div>
               <!-- 普通模式答案 -->
               <div class="questionAnswer" v-if="!practiceMode">
                 <span class="colorBefore"></span>
                 <span class="correctAnswer">正确答案：</span>
-                <span class="answer" @click="toggleAnswer(i)">{{ showAnswers[i] ? showList[i].answer : '点击显示答案'
+                <span class="answer" @click="toggleAnswer(showList[i])">{{ isAnswerShown(showList[i]) ? showList[i].answer : '点击显示答案'
                   }}</span>
               </div>
             </div>
@@ -327,7 +327,7 @@ export default {
   },
   data() {
     return {
-      showAnswers: [],
+      showAnswers: {},
       defaultShowAnswer: false,
       subjectFocus: [],
       searchWord: "",  //搜索框内容
@@ -336,8 +336,8 @@ export default {
       onSearch: false,  //值为true表示显示搜索结果
       options: ['A', 'B', 'C', 'D', 'E'],
       practiceMode: false,
-      practiceAnswers: {},  // { index: answer }
-      practiceResults: {},  // { index: { isCorrect, userAnswer } }
+      practiceAnswers: {},  // { questionId: answer }
+      practiceResults: {},  // { questionId: { isCorrect, userAnswer } }
       subjectOpts: [
         {
           value: 'Marx',
@@ -450,10 +450,9 @@ export default {
         this.list = [];
       }
     }
-    this.showList = [...this.list]
     this.searchWord = ""
     this.onSearch = false
-    this.initShowAnswers();
+    this.updateShowList();
   },
   watch: {
     subjectOptions: {
@@ -462,28 +461,25 @@ export default {
           switch (newValue) {
             case 'all':
               this.list = this.getMergedFavoriteList()
-              this.showList = [...this.list]
               break
             case 'favorites':
               this.list = this.store.likeList
-              this.showList = [...this.list]
               break
             case 'wrong':
               this.list = this.store.wrongQuestions
-              this.showList = [...this.list]
               break
             default:
               return
           }
-          this.initShowAnswers();
+          this.updateShowList();
         }
       }
     },
     favList: {
       handler(newValue) {
         if (this.isFavoritesRoute()) {
-          this.showList = newValue
-          this.initShowAnswers();
+          this.list = newValue
+          this.updateShowList();
         }
       }
     },
@@ -499,12 +495,11 @@ export default {
             this.list = [];
         }
       }
-      this.showList = [...this.list]
       this.searchWord = ""
       this.onSearch = false
       this.practiceAnswers = {}
       this.practiceResults = {}
-      this.initShowAnswers();
+      this.updateShowList();
     },
     // 监听题型筛选
     selectedTypes: {
@@ -534,8 +529,17 @@ export default {
     isFavoritesRoute() {
       return this.$route.name === 'favorites';
     },
+    getQuestionKey(question) {
+      return String(question?.id ?? question?.questionStem ?? '');
+    },
+    isAnswerShown(question) {
+      const questionKey = this.getQuestionKey(question);
+      if (Object.prototype.hasOwnProperty.call(this.showAnswers, questionKey)) {
+        return this.showAnswers[questionKey];
+      }
+      return this.defaultShowAnswer;
+    },
     initShowAnswers() {
-      // Try to restore from localStorage
       const storageKey = this.getAnswerStorageKey();
       let saved = {};
       if (storageKey) {
@@ -543,11 +547,12 @@ export default {
           saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
         } catch (e) { /* ignore */ }
       }
-      // Create a new array to ensure reactivity
-      this.showAnswers = this.showList.map((item, idx) => {
-        if (saved[item.id]) return true;
-        return this.defaultShowAnswer;
+      const nextShowAnswers = {};
+      this.showList.forEach(item => {
+        const questionKey = this.getQuestionKey(item);
+        nextShowAnswers[questionKey] = saved[questionKey] ? true : this.defaultShowAnswer;
       });
+      this.showAnswers = nextShowAnswers;
     },
     getAnswerStorageKey() {
       if (this.isFavoritesRoute()) return 'viewed_favorites';
@@ -559,15 +564,28 @@ export default {
     saveViewedState() {
       const storageKey = this.getAnswerStorageKey();
       if (!storageKey) return;
-      const viewed = {};
-      this.showList.forEach((item, idx) => {
-        if (this.showAnswers[idx]) viewed[item.id] = true;
+      let viewed = {};
+      try {
+        viewed = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      } catch (e) {
+        viewed = {};
+      }
+      this.showList.forEach(item => {
+        const questionKey = this.getQuestionKey(item);
+        if (this.isAnswerShown(item)) {
+          viewed[questionKey] = true;
+        } else {
+          delete viewed[questionKey];
+        }
       });
       localStorage.setItem(storageKey, JSON.stringify(viewed));
     },
-    toggleAnswer(index) {
-      const newVal = !this.showAnswers[index];
-      this.showAnswers.splice(index, 1, newVal);
+    toggleAnswer(question) {
+      const questionKey = this.getQuestionKey(question);
+      this.showAnswers = {
+        ...this.showAnswers,
+        [questionKey]: !this.isAnswerShown(question)
+      };
       this.saveViewedState();
     },
     updateDefaultSetting() {
@@ -577,7 +595,7 @@ export default {
       this.saveViewedState();
     },
     getQuestionType(question) {
-      const { option, answer } = question;
+      const { option = '', answer = '' } = question || {};
       if (!option || option.length === 0) {
         return "fillingBlank"; // 填空题
       } else if (option.length === 2) {
@@ -589,20 +607,26 @@ export default {
       }
       return null; // 未知题型
     },
-    updateShowList(type, checked) {
+    getFilteredList() {
       const validSelectedTypes = Array.isArray(this.selectedTypes) ? this.selectedTypes : [];
       const validSelectedSubjects = Array.isArray(this.subjectFocus) ? this.subjectFocus : [];
 
-      // 筛选题目：题型和科目取交集
       const filteredByType = validSelectedTypes.length
         ? this.list.filter((question) => validSelectedTypes.includes(this.getQuestionType(question)))
-        : this.list; // 若未选择题型，保留所有题型
+        : this.list;
 
-      const filteredBySubject = validSelectedSubjects.length
+      return validSelectedSubjects.length
         ? filteredByType.filter((question) => validSelectedSubjects.includes(question.abbreviationSubject))
-        : filteredByType; // 若未选择科目，保留所有科目
-
-      this.showList = [...filteredBySubject];
+        : filteredByType;
+    },
+    updateShowList(type, checked) {
+      const filteredList = this.getFilteredList();
+      if (this.onSearch && this.searchWord) {
+        const fuse = new Fuse(filteredList, { keys: ['questionStem'] });
+        this.showList = fuse.search(this.searchWord).map(result => result.item);
+      } else {
+        this.showList = [...filteredList];
+      }
       this.initShowAnswers();
     },
     handleCommand(e) {
@@ -633,9 +657,10 @@ export default {
       }
 
     },
-    submitPractice(index, userAnswer) {
-      const question = this.showList[index];
+    submitPractice(question, userAnswer) {
+      if (!question) return;
       const qType = this.getQuestionType(question);
+      const questionKey = this.getQuestionKey(question);
       let isCorrect = false;
 
       if (qType === 'singleChoice' || qType === 'rightWrong') {
@@ -646,16 +671,14 @@ export default {
           userAnswer.length === correctAnswers.length &&
           correctAnswers.every(a => userAnswer.includes(a));
       } else if (qType === 'fillingBlank') {
-        isCorrect = userAnswer && userAnswer.trim() === question.answer;
+        isCorrect = typeof userAnswer === 'string' && userAnswer.trim() === question.answer;
       }
 
-      // 保存结果
-      this.practiceResults[index] = {
+      this.practiceResults[questionKey] = {
         isCorrect,
         userAnswer: Array.isArray(userAnswer) ? userAnswer.join('') : (userAnswer || '')
       };
 
-      // 错了自动加入错题集
       if (!isCorrect) {
         this.store.addWrongQuestion(question);
       }
@@ -699,18 +722,13 @@ export default {
     },
     changeInput() {
       if (this.searchWord === "") {
-        this.showList = [...this.list]
         this.onSearch = false
+        this.updateShowList();
       }
     },
     search() {
-      const fuseOptions = {
-        keys: ['questionStem']
-      };
-      const fuse = new Fuse(this.list, fuseOptions);
-      let temp = this.searchWord ? fuse.search(this.searchWord).map(result => result.item) : this.list;
-      this.showList = [...temp]
-      this.onSearch = this.searchWord === "" ? false : true
+      this.onSearch = this.searchWord !== ""
+      this.updateShowList();
     }
   }
 }
